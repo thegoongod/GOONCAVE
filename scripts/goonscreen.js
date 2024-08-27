@@ -50,59 +50,65 @@ const MAX_VIDEOS_PER_ROW = 4;
 const TOTAL_VIDEOS = 16; //change this shit to the actual amount of videos..
 
 // Function to handle playing the video
-function playVideo(videoNumber) {
+function playVideo(videoNumber, muted = false) {
   console.log("Playing video number:", videoNumber);
   videoNumber = videoNumber.toString().replace(/^0+/, '') || '0';
-  
-  if (!isVideoAllowed(videoNumber)) {
-    console.log(`Video ${videoNumber} doesn't match selected tags`);
-    alert("This video doesn't match the selected tags");
-    return;
-  }
 
-  var videoPath = "videos/" + videoNumber + ".webm";
-  fetch(videoPath, { method: "HEAD" })
-    .then(function (response) {
-      if (response.ok) {
-        console.log(`Video ${videoNumber} found, adding to layout`);
-        var column = myLayout.root.contentItems[0];
-        var currentRow = column.contentItems[column.contentItems.length - 1];
-        if (currentRow.contentItems.length < MAX_VIDEOS_PER_ROW) {
-          // Add to the current row if it's not full
-          var newItemConfig = {
-            title: "GOONSCREEN " + videoNumber,
-            type: "component",
-            componentName: "example",
-            componentState: { text: videoPath },
-          };
-          currentRow.addChild(newItemConfig);
-          console.log(`Added video ${videoNumber} to existing row`);
+  // Check if the video number is valid and ignore tags when a specific number is entered
+  if (!isNaN(videoNumber)) {
+    // Ignore tags when a specific video number is entered
+    var videoPath = "videos/" + videoNumber + ".webm";
+    fetch(videoPath, { method: "HEAD" })
+      .then(function (response) {
+        if (response.ok) {
+          console.log(`Video ${videoNumber} found, adding to layout`);
+          var column = myLayout.root.contentItems[0];
+          var currentRow = column.contentItems[column.contentItems.length - 1];
+          if (currentRow.contentItems.length < MAX_VIDEOS_PER_ROW) {
+            // Add to the current row if it's not full
+            var newItemConfig = {
+              title: "GOONSCREEN " + videoNumber,
+              type: "component",
+              componentName: "example",
+              componentState: { text: videoPath },
+            };
+            currentRow.addChild(newItemConfig);
+            console.log(`Added video ${videoNumber} to existing row`);
+          } else {
+            // Create a new row if the current one is full
+            var newRowConfig = {
+              type: "row",
+              isClosable: false,
+              content: [
+                {
+                  title: "GOONSCREEN " + videoNumber,
+                  type: "component",
+                  componentName: "example",
+                  componentState: { text: videoPath },
+                },
+              ],
+            };
+            column.addChild(newRowConfig);
+            console.log(`Created new row for video ${videoNumber}`);
+          }
         } else {
-          // Create a new row if the current one is full
-          var newRowConfig = {
-            type: "row",
-            isClosable: false,
-            content: [
-              {
-                title: "GOONSCREEN " + videoNumber,
-                type: "component",
-                componentName: "example",
-                componentState: { text: videoPath },
-              },
-            ],
-          };
-          column.addChild(newRowConfig);
-          console.log(`Created new row for video ${videoNumber}`);
+          console.error(`Video ${videoNumber} not found`);
+          alert("Video not found");
         }
-      } else {
-        console.error(`Video ${videoNumber} not found`);
-        alert("Video not found");
+      })
+      .catch(function (error) {
+        console.error(`Error checking video file for ${videoNumber}:`, error);
+        alert("Error checking video file");
+      });
+  } else {
+    // If target is a tag, play all videos with that tag
+    Object.keys(videoTags).forEach(videoNumber => {
+      if (videoTags[videoNumber].includes(target)) {
+        // Existing video playing logic
+        // Add muting logic here
       }
-    })
-    .catch(function (error) {
-      console.error(`Error checking video file for ${videoNumber}:`, error);
-      alert("Error checking video file");
     });
+  }
 }
 
 // Event listener for the holy goon button :D
@@ -129,10 +135,10 @@ document.getElementById("randomButton").addEventListener("click", function () {
   let randomVideoNumber;
   do {
     randomVideoNumber = Math.floor(Math.random() * TOTAL_VIDEOS) + 1;
-  } while (!isVideoAllowed(randomVideoNumber.toString()));
-  
+  } while (!isVideoAllowed(randomVideoNumber.toString())); // Check if the random video is allowed based on tags
+
   console.log("Random video number:", randomVideoNumber);
-  playVideo(randomVideoNumber.toString());
+  playVideo(randomVideoNumber.toString()); // Play the random video
 });
 
 // Function to remove the most recently played video

@@ -2,7 +2,7 @@ let videoTags = {};
 let selectedTags = new Set();
 
 // Load video tags from JSON file
-fetch('/videoTags.json')
+fetch('/tagging/videoTags.json')
   .then(response => response.json())
   .then(data => {
     videoTags = data;
